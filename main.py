@@ -16,18 +16,18 @@ db.init_app(app)
 
 
 class Movie(db.Model):
-  id = db.Column(db.Integer, primary_key=True)
-  title = db.Column(db.String, unique=True)
-  year = db.Column(db.String)
-  description = db.Column(db.String)
-  rating = db.Column(db.Integer)
-  ranking = db.Column(db.Integer)
-  review = db.Column(db.String)
-  img_url = db.Column(db.String)
-  
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String, unique=True)
+    year = db.Column(db.String)
+    description = db.Column(db.String)
+    rating = db.Column(db.Integer)
+    ranking = db.Column(db.Integer)
+    review = db.Column(db.String)
+    img_url = db.Column(db.String)
+
 
 with app.app_context():
-  db.create_all()
+    db.create_all()
 
 new_movie = Movie(
     title="Phone Booth",
@@ -47,33 +47,46 @@ second_movie = Movie(
     review="I liked the water.",
     img_url="https://image.tmdb.org/t/p/w500/t6HIqrRAclMCA60NsSmeqe9RmNV.jpg"
 )
+
+
 # with app.app_context():
 #   db.session.add(second_movie)
 #   db.session.commit()
 
 class MovieForm(FlaskForm):
-  rating = StringField('Your Rating', validators=[DataRequired()])
-  review = StringField("Your Review", validators=[DataRequired()])
-  submit = SubmitField('Done')
+    rating = StringField('Your Rating', validators=[DataRequired()])
+    review = StringField("Your Review")
+    submit = SubmitField('Done')
+
 
 @app.route("/")
 def home():
-  result = db.session.execute(db.select(Movie))
-  all_movies = result.scalars()
-  return render_template("index.html", movies=all_movies)
+    result = db.session.execute(db.select(Movie))
+    all_movies = result.scalars()
+    return render_template("index.html", movies=all_movies)
 
-@app.route("/edit" , methods=["GET", "POST"])
+
+@app.route("/edit", methods=["GET", "POST"])
 def edit():
-  form = MovieForm()
-  movie_id = request.args.get('id')
-  movie = db.get_or_404(Movie, movie_id)
-  if form.validate_on_submit():
-    movie.rating = float(form.rating.data)
-    movie.review = form.review.data
+    form = MovieForm()
+    movie_id = request.args.get('id')
+    movie = db.get_or_404(Movie, movie_id)
+    if form.validate_on_submit():
+        movie.rating = float(form.rating.data)
+        movie.review = form.review.data
+        db.session.commit()
+        return redirect(url_for('home'))
+    return render_template("edit.html", movie=movie, form=form)
+
+
+@app.route("/delete")
+def delete():
+    movie_id = request.args.get('id')
+    movie = db.get_or_404(Movie, movie_id)
+    db.session.delete(movie)
     db.session.commit()
-    return redirect(url_for('home')) 
-  return render_template("edit.html", movie=movie, form=form)
+    return redirect(url_for('home'))
 
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', debug=True)
+    app.run(debug=True)
