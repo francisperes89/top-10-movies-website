@@ -72,8 +72,10 @@ class AddMovieForm(FlaskForm):
 
 @app.route("/")
 def home():
-    result = db.session.execute(db.select(Movie))
-    all_movies = result.scalars()
+    result = db.session.execute(db.select(Movie).order_by(Movie.rating))
+    all_movies = result.scalars().all()
+    for movie in range(len(all_movies)):
+        all_movies[movie].ranking = len(all_movies) - movie
     return render_template("index.html", movies=all_movies)
 
 
@@ -129,7 +131,7 @@ def find_movie():
             img_url=f"{IMAGE_URL}{data['poster_path']}")
         db.session.add(new_movie)
         db.session.commit()
-        return redirect(url_for('home'))
+        return redirect(url_for('edit', id=new_movie.id))
 
 
 if __name__ == '__main__':
